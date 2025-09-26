@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	aitool "pcl/internal/ai"
-	gittool "pcl/internal/git"
-	jira "pcl/internal/jira"
+	aitool "github.com/ledzpl/pcl/internal/ai"
+	gittool "github.com/ledzpl/pcl/internal/git"
+	jira "github.com/ledzpl/pcl/internal/jira"
 
 	"github.com/briandowns/spinner"
 	"github.com/manifoldco/promptui"
