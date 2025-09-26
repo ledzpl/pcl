@@ -1,4 +1,4 @@
-module pcl
+module github.com/ledzpl/pcl
 
 go 1.25.1
 
