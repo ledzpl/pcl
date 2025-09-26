@@ -32,10 +32,10 @@ go build -o pcl
 | 이름 | 설명 |
 | --- | --- |
 | `OPENAI_API_KEY` | OpenAI GPT-5 채팅 컴플리션을 호출할 때 사용하는 API 키 |
-| `JIRA_API_KEY` | Atlassian Cloud 개인용 토큰(Email + API Token 조합) |
+| `JIRA_API_KEY` | Atlassian Cloud 개인용 토큰 |
 | `JIRA_HOST` | Jira 호스트 URL (예: `https://your-domain.atlassian.net`) |
 | `JIRA_EMAIL` | Jira Cloud 계정 이메일 |
-| `JIRA_PROJECT` | 이슈를 생성할 프로젝트 키 (예: `PCL`) |
+| `JIRA_PROJECT` | 이슈를 생성할 프로젝트 키 (예: `DEVOPS`) |
 
 예시:
 ```bash
@@ -47,9 +47,9 @@ export JIRA_PROJECT="PCL"
 ```
 
 ## 사용 방법
-1. 로컬 저장소에서 작업 브랜치를 checkout하고 커밋되지 않은 변경 또는 추가 커밋이 있는지 확인합니다.
+1. 로컬 저장소에서 작업 브랜치 변경 사항을 모두 커밋합니다.
 2. 터미널에서 `pcl`을 실행합니다.
-3. 프롬프트에서 기준 브랜치를 선택합니다. 선택한 브랜치와 현재 `HEAD` 사이의 diff가 자동 계산됩니다(`git diff --no-color --no-ext-diff -U0 -M -w <base>...HEAD`).
+3. 프롬프트에서 기준 브랜치를 선택합니다.
 4. 스피너가 표시되는 동안 OpenAI가 diff를 해석하고 Jira용 JSON을 생성합니다.
 5. 생성된 JSON을 그대로 Jira REST API에 전송하여 이슈를 생성합니다.
 6. 작업이 성공하면 Jira에서 새 이슈를 확인할 수 있습니다.
