@@ -2,6 +2,8 @@
 
 코드 변경(diff)을 분석해 Jira Cloud에 적합한 이슈를 자동으로 생성해 주는 Go 기반 CLI 도구입니다. 로컬 Git 저장소의 변경 사항을 읽어 OpenAI GPT-5 모델에 전달하고, 반환된 JSON 페이로드를 Jira REST API `/rest/api/3/issue` 엔드포인트에 바로 업로드합니다.
 
+go lang 을 처음 써보는 거라 언어에 익숙하지 않습니다. 좋은 go lang code 는 아닌 것 같으니 아이디어만 참고해주시면 좋겠습니다.
+
 ## 주요 특징
 - 변경 의도 파악: `git diff` 정보를 분석해 Story/Task 유형을 선택하고, 요약과 ADF 형식 설명을 자동 생성합니다.
 - 인터랙티브 워크플로: 현재 저장소의 브랜치를 탐색해 기준 브랜치를 고르는 프롬프트 UI를 제공합니다.
@@ -58,13 +60,6 @@ export JIRA_PROJECT="PCL"
 - `internal/git`: go-git과 로컬 `git` 명령을 이용해 브랜치 목록과 diff를 가져옵니다.
 - `internal/ai`: OpenAI Chat Completions(`gpt-5`)을 호출해 Jira 이슈 스키마에 맞는 JSON을 생성합니다.
 - `internal/jira`: Resty HTTP 클라이언트로 `/myself`에서 Account ID를 조회하고 `/issue`에 JSON을 POST합니다.
-
-## 개발 & 테스트
-개발자 환경에서 동작을 검증할 때는 다음 명령을 참고하세요.
-```bash
-go test ./...
-```
-테스트 커버리지는 향후 추가 예정이며, PR 전에는 최소한 기본 빌드(`go build ./...`)가 성공하는지 확인해 주세요.
 
 ## 문제 해결
 - **환경 변수 미설정**: 실행 즉시 에러 메시지를 출력하고 종료합니다. 위 표의 변수들이 올바르게 설정되었는지 확인하세요.
