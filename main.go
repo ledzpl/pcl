@@ -1,13 +1,14 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"time"
 
 	aitool "github.com/ledzpl/pcl/internal/ai"
+	"github.com/ledzpl/pcl/internal/config"
 	gittool "github.com/ledzpl/pcl/internal/git"
 	jira "github.com/ledzpl/pcl/internal/jira"
 
@@ -26,35 +27,15 @@ const pcl string = `
 `
 
 func main() {
+	configPath := flag.String("config", "config.json", "path to configuration file")
+	flag.Parse()
 
 	fmt.Print(pcl)
 
-	openai_key, _ := os.LookupEnv("OPENAI_API_KEY")
-	if IsBlank(openai_key) {
-		log.Fatalf("I need OPENAI_API_KEY, You should export OPENAI_API_KEY")
+	cfg, err := config.Load(*configPath)
+	if err != nil {
+		log.Fatalf("failed to load config from %s: %v", *configPath, err)
 	}
-
-	jira_key, _ := os.LookupEnv("JIRA_API_KEY")
-	if IsBlank(jira_key) {
-		log.Fatalf("I need JIRA_API_KEY, You should export JIRA_API_KEY")
-	}
-
-	jira_host, _ := os.LookupEnv("JIRA_HOST")
-	if IsBlank(jira_host) {
-		log.Fatalf("I need JIRA_HOST, You should export JIRA_HOST")
-	}
-
-	jira_email, _ := os.LookupEnv("JIRA_EMAIL")
-	if IsBlank(jira_email) {
-		log.Fatalf("I need JIRA_EMAIL, You should export JIRA_EMAIL")
-	}
-
-	jira_project, _ := os.LookupEnv("JIRA_PROJECT")
-	if IsBlank(jira_project) {
-		log.Fatalf("I need JIRA_PROJECT, You should export JIRA_PROJECT")
-	}
-
-	//
 
 	branches := gittool.GetBranches()
 
@@ -72,13 +53,14 @@ func main() {
 	s := spinner.New(spinner.CharSets[38], 300*time.Millisecond)
 	s.Prefix = "Working... "
 	s.HideCursor = true
+	s.FinalMSG = "Done"
 	s.Start()
 
-	accountId := jira.GetAccountId(jira_email, jira_host, jira_key)
+	accountId := jira.GetAccountId(cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey)
 
-	airesponse := aitool.Analysis(diff, accountId, jira_project)
+	airesponse := aitool.Analysis(diff, accountId, cfg.JiraProject, cfg.OpenAIAPIKey)
 
-	jira.CreateIssue(airesponse, jira_email, jira_host, jira_key)
+	jira.CreateIssue(airesponse, cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey)
 
 	s.Stop()
 }
