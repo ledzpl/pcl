@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/option"
 )
 
 const SYSPROMPT string = `
@@ -78,8 +79,8 @@ const PROMPT string = `
   }
 }`
 
-func Analysis(diff, accountId, projectId string) string {
-	client := openai.NewClient()
+func Analysis(diff, accountId, projectId, apiKey string) string {
+	client := openai.NewClient(option.WithAPIKey(apiKey))
 
 	resp, err := client.Chat.Completions.New(
 		context.Background(),

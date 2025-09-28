@@ -26,24 +26,33 @@ cd pcl
 go build -o pcl
 ```
 
-## 환경 변수 설정
-다음 환경 변수가 모두 설정되어 있어야 실행할 수 있습니다.
+## 설정 파일
+`pcl`은 실행 시 자격 증명을 JSON 설정 파일에서 읽어옵니다. 기본 경로는 현재 작업 디렉터리의 `config.json`이며, 다른 경로를 사용하려면 `-config` 플래그를 전달하세요.
 
-| 이름 | 설명 |
-| --- | --- |
-| `OPENAI_API_KEY` | OpenAI GPT-5 채팅 컴플리션을 호출할 때 사용하는 API 키 |
-| `JIRA_API_KEY` | Atlassian Cloud 개인용 토큰 |
-| `JIRA_HOST` | Jira 호스트 URL (예: `https://your-domain.atlassian.net`) |
-| `JIRA_EMAIL` | Jira Cloud 계정 이메일 |
-| `JIRA_PROJECT` | 이슈를 생성할 프로젝트 키 (예: `DEVOPS`) |
-
-예시:
 ```bash
-export OPENAI_API_KEY="sk-..."
-export JIRA_API_KEY="your-jira-token"
-export JIRA_HOST="https://your-domain.atlassian.net"
-export JIRA_EMAIL="you@example.com"
-export JIRA_PROJECT="PCL"
+pcl -config /path/to/config.json
+```
+
+설정 파일에 포함해야 하는 키는 다음과 같습니다.
+
+| 키 | 설명 |
+| --- | --- |
+| `openai_api_key` | OpenAI GPT-5 채팅 컴플리션을 호출할 때 사용하는 API 키 |
+| `jira_api_key` | Atlassian Cloud 개인용 토큰 |
+| `jira_host` | Jira 호스트 URL (예: `https://your-domain.atlassian.net`) |
+| `jira_email` | Jira Cloud 계정 이메일 |
+| `jira_project` | 이슈를 생성할 프로젝트 키 (예: `DEVOPS`) |
+
+예시 (`config.json`):
+
+```json
+{
+  "openai_api_key": "sk-...",
+  "jira_api_key": "your-jira-token",
+  "jira_host": "https://your-domain.atlassian.net",
+  "jira_email": "you@example.com",
+  "jira_project": "PCL"
+}
 ```
 
 ## 사용 방법
@@ -64,7 +73,7 @@ export JIRA_PROJECT="PCL"
 - `internal/jira`: Resty HTTP 클라이언트로 `/myself`에서 Account ID를 조회하고 `/issue`에 JSON을 POST합니다.
 
 ## 문제 해결
-- **환경 변수 미설정**: 실행 즉시 에러 메시지를 출력하고 종료합니다. 위 표의 변수들이 올바르게 설정되었는지 확인하세요.
+- **설정 파일 누락/오타**: 설정 파일 경로가 맞는지, 필수 키(`openai_api_key`, `jira_api_key`, `jira_host`, `jira_email`, `jira_project`)에 값이 채워졌는지 확인하세요.
 - **계정 권한 부족**: Jira API 응답이 401/403일 경우 토큰과 이메일, 프로젝트 키를 재검증합니다.
 - **브랜치 감지 실패**: 저장소 루트에서 실행했는지, Git 저장소가 초기화되어 있는지 확인합니다.
 
