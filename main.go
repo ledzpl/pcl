@@ -53,6 +53,7 @@ func main() {
 	s := spinner.New(spinner.CharSets[38], 300*time.Millisecond)
 	s.Prefix = "Working... "
 	s.HideCursor = true
+	s.FinalMSG = "Done"
 	s.Start()
 
 	accountId := jira.GetAccountId(cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey)
