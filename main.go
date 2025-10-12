@@ -65,10 +65,12 @@ func main() {
 
 	airesponse := aitool.Analysis(diff, accountId, cfg.JiraProject, cfg.OpenAIAPIKey)
 
-	if err := jira.CreateIssue(airesponse, cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey); err != nil {
-		s.FinalMSG = ""
-		log.Fatalf("failed to create Jira issue: %v", err)
-	}
+	fmt.Println(airesponse)
+
+	// if err := jira.CreateIssue(airesponse, cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey); err != nil {
+	// 	s.FinalMSG = ""
+	// 	log.Fatalf("failed to create Jira issue: %v", err)
+	// }
 }
 
 func IsBlank(s string) bool {
