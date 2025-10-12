@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/option"
@@ -100,4 +101,42 @@ func Analysis(diff, accountId, projectId, apiKey string) string {
 	}
 
 	return resp.Choices[0].Message.Content
+}
+
+const commitSystemPrompt string = `
+당신은 숙련된 소프트웨어 엔지니어로서 제공된 git diff 변경 사항을 분석해 간결하고 의미 있는 커밋 메시지를 작성합니다.
+모든 출력은 한국어로 작성합니다.`
+
+const commitPrompt string = `
+다음 git diff를 기반으로 Conventional Commits 형식의 커밋 메시지를 작성해줘.
+
+지침:
+- 커밋 제목(subject)은 "type(scope): description" 구조를 사용하고, scope는 필요할 때만 작성합니다.
+- type은 feat, fix, refactor, chore, docs, test, perf 중에서 가장 알맞은 것을 고릅니다.
+- description은 50자를 넘기지 말고, 현재형 서술로 변경 의도를 요약합니다.
+- 본문(body)이 필요하면 한 줄을 비우고 72자 이하 문장이나 bullet("- ")으로 핵심 변경점을 정리합니다.
+- 테스트에 국한된 diff라면 type으로 test를 사용하고 간단히 요약합니다.
+- 출력은 추가 설명 없이 커밋 메시지 문자열만 반환합니다.`
+
+func CommitMessage(diff, apiKey string) string {
+	client := openai.NewClient(option.WithAPIKey(apiKey))
+
+	resp, err := client.Chat.Completions.New(
+		context.Background(),
+		openai.ChatCompletionNewParams{
+			Model: openai.ChatModelGPT5,
+			Messages: []openai.ChatCompletionMessageParamUnion{
+				openai.SystemMessage(commitSystemPrompt),
+				openai.UserMessage(commitPrompt),
+				openai.UserMessage(diff),
+			},
+			Seed: openai.Int(42),
+		},
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return strings.TrimSpace(resp.Choices[0].Message.Content)
 }

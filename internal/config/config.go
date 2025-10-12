@@ -26,14 +26,21 @@ func Load(path string) (*Config, error) {
 		return nil, fmt.Errorf("config: parse %q: %w", path, err)
 	}
 
-	if err := cfg.Validate(); err != nil {
-		return nil, err
-	}
-
 	return &cfg, nil
 }
 
 func (c Config) Validate() error {
+	return c.ValidateForJira()
+}
+
+func (c Config) ValidateForAI() error {
+	if isBlank(c.OpenAIAPIKey) {
+		return fmt.Errorf("config: missing required keys: %s", "openai_api_key")
+	}
+	return nil
+}
+
+func (c Config) ValidateForJira() error {
 	missing := make([]string, 0, 5)
 
 	if isBlank(c.OpenAIAPIKey) {
