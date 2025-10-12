@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -50,7 +51,9 @@ func TestCreateIssue(t *testing.T) {
 	email := "user@example.com"
 	token := "token123"
 
-	CreateIssue(reqBody, email, ts.URL, token)
+	if err := CreateIssue(reqBody, email, ts.URL, token); err != nil {
+		t.Fatalf("CreateIssue() unexpected error: %v", err)
+	}
 
 	if received.method != http.MethodPost {
 		t.Fatalf("CreateIssue did not POST: got %s", received.method)
@@ -78,6 +81,26 @@ func TestCreateIssue(t *testing.T) {
 	}
 }
 
+func TestCreateIssueReturnsErrorOnHTTPFailure(t *testing.T) {
+	ts := newIPv4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte(`{"error":"invalid payload"}`))
+	}))
+	defer ts.Close()
+
+	email := "user@example.com"
+	token := "token123"
+
+	err := CreateIssue(`{"fields":{}}`, email, ts.URL, token)
+	if err == nil {
+		t.Fatalf("CreateIssue() expected error for HTTP 400")
+	}
+	if !strings.Contains(err.Error(), "status 400") {
+		t.Fatalf("CreateIssue() error %q missing status code", err)
+	}
+}
+
 func TestGetAccountId(t *testing.T) {
 	const accountID = "abc-123"
 
@@ -102,7 +125,10 @@ func TestGetAccountId(t *testing.T) {
 	email := "user@example.com"
 	token := "token123"
 
-	got := GetAccountId(email, ts.URL, token)
+	got, err := GetAccountId(email, ts.URL, token)
+	if err != nil {
+		t.Fatalf("GetAccountId() unexpected error: %v", err)
+	}
 	if got != accountID {
 		t.Fatalf("GetAccountId() = %q, want %q", got, accountID)
 	}
@@ -114,6 +140,45 @@ func TestGetAccountId(t *testing.T) {
 
 	if received.Get("Accept") != "application/json" {
 		t.Fatalf("Accept header = %q, want application/json", received.Get("Accept"))
+	}
+}
+
+func TestGetAccountIdReturnsErrorOnHTTPFailure(t *testing.T) {
+	ts := newIPv4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		_, _ = w.Write([]byte(`{"error":"unauthorized"}`))
+	}))
+	defer ts.Close()
+
+	email := "user@example.com"
+	token := "token123"
+
+	_, err := GetAccountId(email, ts.URL, token)
+	if err == nil {
+		t.Fatalf("GetAccountId() expected error for HTTP 401")
+	}
+	if !strings.Contains(err.Error(), "status 401") {
+		t.Fatalf("GetAccountId() error %q missing status code", err)
+	}
+}
+
+func TestGetAccountIdMissingField(t *testing.T) {
+	ts := newIPv4Server(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{}`))
+	}))
+	defer ts.Close()
+
+	email := "user@example.com"
+	token := "token123"
+
+	_, err := GetAccountId(email, ts.URL, token)
+	if err == nil {
+		t.Fatalf("GetAccountId() expected error when accountId missing")
+	}
+	if !strings.Contains(err.Error(), "missing accountId") {
+		t.Fatalf("GetAccountId() error %q missing expected message", err)
 	}
 }
 

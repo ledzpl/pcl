@@ -56,11 +56,20 @@ func main() {
 	s.FinalMSG = "Done"
 	s.Start()
 
-	accountId := jira.GetAccountId(cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey)
+	accountId, err := jira.GetAccountId(cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey)
+	if err != nil {
+		s.FinalMSG = ""
+		s.Stop()
+		log.Fatalf("failed to fetch Jira account ID: %v", err)
+	}
 
 	airesponse := aitool.Analysis(diff, accountId, cfg.JiraProject, cfg.OpenAIAPIKey)
 
-	jira.CreateIssue(airesponse, cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey)
+	if err := jira.CreateIssue(airesponse, cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey); err != nil {
+		s.FinalMSG = ""
+		s.Stop()
+		log.Fatalf("failed to create Jira issue: %v", err)
+	}
 
 	s.Stop()
 }
