@@ -55,11 +55,11 @@ func main() {
 	s.HideCursor = true
 	s.FinalMSG = "Done"
 	s.Start()
+	defer s.Stop()
 
 	accountId, err := jira.GetAccountId(cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey)
 	if err != nil {
 		s.FinalMSG = ""
-		s.Stop()
 		log.Fatalf("failed to fetch Jira account ID: %v", err)
 	}
 
@@ -67,11 +67,8 @@ func main() {
 
 	if err := jira.CreateIssue(airesponse, cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey); err != nil {
 		s.FinalMSG = ""
-		s.Stop()
 		log.Fatalf("failed to create Jira issue: %v", err)
 	}
-
-	s.Stop()
 }
 
 func IsBlank(s string) bool {
