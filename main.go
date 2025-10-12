@@ -16,6 +16,12 @@ import (
 	"github.com/manifoldco/promptui"
 )
 
+const (
+	actionCreateJiraIssue  = "Jira 이슈 생성"
+	actionCommitMessage    = "커밋 메시지 생성"
+	defaultSpinnerFinalMsg = "완료\n"
+)
+
 const pcl string = `
 ██╗  ██╗███████╗██╗     ██╗      ██████╗        ██████╗  ██████╗██╗     ██╗
 ██║  ██║██╔════╝██║     ██║     ██╔═══██╗       ██╔══██╗██╔════╝██║     ██║
@@ -50,30 +56,77 @@ func main() {
 		log.Fatalf("비교할 변경점이 없습니다.")
 	}
 
-	s := spinner.New(spinner.CharSets[38], 300*time.Millisecond)
-	s.Prefix = "Working... "
-	s.HideCursor = true
-	s.FinalMSG = "Done"
-	s.Start()
-
-	accountId, err := jira.GetAccountId(cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey)
+	actionPrompt := promptui.Select{
+		Label: "실행할 작업 선택",
+		Items: []string{actionCreateJiraIssue, actionCommitMessage},
+	}
+	_, action, err := actionPrompt.Run()
 	if err != nil {
-		s.FinalMSG = ""
-		s.Stop()
-		log.Fatalf("failed to fetch Jira account ID: %v", err)
+		return
 	}
 
-	airesponse := aitool.Analysis(diff, accountId, cfg.JiraProject, cfg.OpenAIAPIKey)
+	switch action {
+	case actionCreateJiraIssue:
+		if err := cfg.ValidateForJira(); err != nil {
+			log.Fatalf("설정이 올바르지 않습니다: %v", err)
+		}
 
-	if err := jira.CreateIssue(airesponse, cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey); err != nil {
-		s.FinalMSG = ""
-		s.Stop()
-		log.Fatalf("failed to create Jira issue: %v", err)
+		s := startSpinner("Jira 이슈 생성 중... ", "Jira 이슈 생성 완료\n")
+
+		accountId, err := jira.GetAccountId(cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey)
+		if err != nil {
+			s.FinalMSG = ""
+			stopSpinner(s)
+			log.Fatalf("failed to fetch Jira account ID: %v", err)
+		}
+
+		airesponse := aitool.Analysis(diff, accountId, cfg.JiraProject, cfg.OpenAIAPIKey)
+
+		fmt.Println(airesponse)
+
+		if err := jira.CreateIssue(airesponse, cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey); err != nil {
+			s.FinalMSG = ""
+			stopSpinner(s)
+			log.Fatalf("failed to create Jira issue: %v", err)
+		}
+
+		stopSpinner(s)
+		fmt.Println(airesponse)
+
+	case actionCommitMessage:
+		if err := cfg.ValidateForAI(); err != nil {
+			log.Fatalf("설정이 올바르지 않습니다: %v", err)
+		}
+
+		s := startSpinner("커밋 메시지 생성 중... ", "커밋 메시지가 준비되었습니다.\n")
+		message := aitool.CommitMessage(diff, cfg.OpenAIAPIKey)
+		stopSpinner(s)
+		fmt.Println(message)
+	default:
+		log.Fatalf("지원하지 않는 작업입니다: %s", action)
 	}
-
-	s.Stop()
 }
 
 func IsBlank(s string) bool {
 	return len(strings.TrimSpace(s)) == 0
+}
+
+func startSpinner(prefix, final string) *spinner.Spinner {
+	s := spinner.New(spinner.CharSets[38], 300*time.Millisecond)
+	s.Prefix = prefix
+	s.HideCursor = true
+	if final == "" {
+		final = defaultSpinnerFinalMsg
+	}
+	s.FinalMSG = final
+	s.Start()
+	return s
+}
+
+func stopSpinner(s *spinner.Spinner) {
+	if s == nil {
+		return
+	}
+	s.Stop()
+	s.HideCursor = false
 }

@@ -46,7 +46,7 @@ func Diff(src string) string {
 		"-U0",
 		"-M",
 		"-w",
-		base+"...HEAD")
+		base)
 
 	if err != nil {
 		log.Fatal(err)

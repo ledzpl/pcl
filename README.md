@@ -10,6 +10,7 @@
 - 인터랙티브 워크플로: 현재 저장소의 브랜치를 탐색해 기준 브랜치를 고르는 프롬프트 UI를 제공합니다.
 - Jira 연동 자동화: Atlassian Cloud 계정의 Account ID를 조회한 뒤, 즉시 이슈를 생성합니다.
 - 안전 장치: 의미 있는 변경이 없으면 `null`을 반환해 불필요한 이슈 생성을 막습니다.
+- 커밋 메시지 생성: 동일한 diff를 기반으로 Conventional Commits 스타일의 한국어 커밋 메시지를 제안합니다.
 
 ## 요구 사항
 - Go 1.25 이상
@@ -44,6 +45,8 @@ pcl -config /path/to/config.json
 | `jira_email` | Jira Cloud 계정 이메일 |
 | `jira_project` | 이슈를 생성할 프로젝트 키 (예: `DEVOPS`) |
 
+> 커밋 메시지 생성 기능만 사용할 경우 `openai_api_key`만 설정하면 됩니다.
+
 예시 (`config.json`):
 
 ```json
@@ -60,9 +63,10 @@ pcl -config /path/to/config.json
 1. 로컬 저장소에서 작업 브랜치 변경 사항을 모두 커밋합니다.
 2. 터미널에서 `pcl`을 실행합니다.
 3. 프롬프트에서 기준 브랜치를 선택합니다. - main 에서 분리됐으면 main, dev 에서 분리됐으면 dev 선택
-4. 스피너가 표시되는 동안 OpenAI가 diff를 해석하고 Jira용 JSON을 생성합니다.
-5. 생성된 JSON을 그대로 Jira REST API에 전송하여 이슈를 생성합니다.
-6. 작업이 성공하면 Jira에서 새 이슈를 확인할 수 있습니다.
+4. 이어서 실행할 작업(커밋 메시지 생성 또는 Jira 이슈 생성)을 선택합니다.
+5. 스피너가 표시되는 동안 OpenAI가 diff를 분석해 결과를 준비합니다.
+6. 커밋 메시지를 확인하거나, 생성된 JSON이 Jira REST API에 전송되어 이슈가 생성됩니다.
+7. 작업이 성공하면 출력된 커밋 메시지 또는 Jira 응답 JSON을 확인합니다.
 
 > local 저장소 기준으로 diff 를 뜹니다.
 
@@ -70,7 +74,7 @@ pcl -config /path/to/config.json
 
 ## 동작 구성 요소
 - `internal/git`: go-git과 로컬 `git` 명령을 이용해 브랜치 목록과 diff를 가져옵니다.
-- `internal/ai`: OpenAI Chat Completions(`gpt-5`)을 호출해 Jira 이슈 스키마에 맞는 JSON을 생성합니다.
+- `internal/ai`: OpenAI Chat Completions(`gpt-5`)을 호출해 Jira 이슈 JSON과 Conventional Commit 메시지를 생성합니다.
 - `internal/jira`: Resty HTTP 클라이언트로 `/myself`에서 Account ID를 조회하고 `/issue`에 JSON을 POST합니다.
 
 ## 문제 해결
