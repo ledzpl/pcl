@@ -55,7 +55,11 @@ func main() {
 	s.HideCursor = true
 	s.FinalMSG = "Done"
 	s.Start()
-	defer s.Stop()
+	defer func() {
+		s.Stop()
+		s.HideCursor = false
+		fmt.Println("hello")
+	}()
 
 	accountId, err := jira.GetAccountId(cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey)
 	if err != nil {
@@ -65,12 +69,12 @@ func main() {
 
 	airesponse := aitool.Analysis(diff, accountId, cfg.JiraProject, cfg.OpenAIAPIKey)
 
-	fmt.Println(airesponse)
+	fmt.Print(airesponse)
 
-	// if err := jira.CreateIssue(airesponse, cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey); err != nil {
-	// 	s.FinalMSG = ""
-	// 	log.Fatalf("failed to create Jira issue: %v", err)
-	// }
+	if err := jira.CreateIssue(airesponse, cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey); err != nil {
+		s.FinalMSG = ""
+		log.Fatalf("failed to create Jira issue: %v", err)
+	}
 }
 
 func IsBlank(s string) bool {
