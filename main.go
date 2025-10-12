@@ -22,6 +22,8 @@ const (
 	defaultSpinnerFinalMsg = "완료\n"
 )
 
+const ansiReset = "\033[0m"
+
 const pcl string = `
 ██╗  ██╗███████╗██╗     ██╗      ██████╗        ██████╗  ██████╗██╗     ██╗
 ██║  ██║██╔════╝██║     ██║     ██╔═══██╗       ██╔══██╗██╔════╝██║     ██║
@@ -32,11 +34,20 @@ const pcl string = `
 
 `
 
+var rainbowColors = []string{
+	"\033[31m",
+	"\033[33m",
+	"\033[32m",
+	"\033[36m",
+	"\033[34m",
+	"\033[35m",
+}
+
 func main() {
 	configPath := flag.String("config", "config.json", "path to configuration file")
 	flag.Parse()
 
-	fmt.Print(pcl)
+	printRainbowASCIIArt(pcl)
 
 	cfg, err := config.Load(*configPath)
 	if err != nil {
@@ -81,8 +92,6 @@ func main() {
 		}
 
 		airesponse := aitool.Analysis(diff, accountId, cfg.JiraProject, cfg.OpenAIAPIKey)
-
-		fmt.Println(airesponse)
 
 		if err := jira.CreateIssue(airesponse, cfg.JiraEmail, cfg.JiraHost, cfg.JiraAPIKey); err != nil {
 			s.FinalMSG = ""
@@ -129,4 +138,13 @@ func stopSpinner(s *spinner.Spinner) {
 	}
 	s.Stop()
 	s.HideCursor = false
+}
+
+func printRainbowASCIIArt(s string) {
+	lines := strings.Split(strings.Trim(s, "\n"), "\n")
+	for i, line := range lines {
+		color := rainbowColors[i%len(rainbowColors)]
+		fmt.Println(color + line + ansiReset)
+	}
+	fmt.Println()
 }
